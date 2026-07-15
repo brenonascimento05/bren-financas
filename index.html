@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Minhas Contas</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- Banner de lembrete de backup (aparece dinamicamente via JS) -->
+  <div id="banner-backup" class="banner oculto">
+    ⚠️ Faz tempo que você não faz backup. <button id="btn-banner-backup">Fazer agora</button>
+    <button id="btn-fechar-banner" class="fechar" aria-label="Fechar">×</button>
+  </div>
+
+  <!-- ===================== TELA: CONTAS DO MÊS ===================== -->
+  <section id="tela-contas" class="tela ativa">
+    <header class="cabecalho-tela">
+      <div class="navegacao-mes">
+        <button id="mes-anterior" class="botao-icone" aria-label="Mês anterior">‹</button>
+        <h1 id="titulo-mes">-</h1>
+        <button id="mes-proximo" class="botao-icone" aria-label="Próximo mês">›</button>
+      </div>
+    </header>
+
+    <div id="alerta-gasto" class="alerta oculto"></div>
+
+    <div class="cards-resumo">
+      <div class="card card-pendente">
+        <span class="card-rotulo">Pendente</span>
+        <span class="card-valor" id="resumo-pendente">R$ 0,00</span>
+      </div>
+      <div class="card card-pago">
+        <span class="card-rotulo">Pago</span>
+        <span class="card-valor" id="resumo-pago">R$ 0,00</span>
+      </div>
+      <div class="card card-saldo">
+        <span class="card-rotulo">Saldo disponível</span>
+        <span class="card-valor" id="resumo-saldo">R$ 0,00</span>
+      </div>
+    </div>
+
+    <ul id="lista-contas" class="lista-contas"></ul>
+    <p id="lista-contas-vazia" class="texto-vazio oculto">Nenhum lançamento neste mês.</p>
+  </section>
+
+  <!-- ===================== TELA: DASHBOARD ===================== -->
+  <section id="tela-dashboard" class="tela">
+    <header class="cabecalho-tela">
+      <h1>Dashboard</h1>
+    </header>
+
+    <div class="filtros-dashboard">
+      <select id="filtro-mes"></select>
+      <select id="filtro-tipo">
+        <option value="">Todos os tipos</option>
+        <option value="entrada">Entradas</option>
+        <option value="saida">Saídas</option>
+      </select>
+      <select id="filtro-categoria"><option value="">Todas categorias</option></select>
+      <select id="filtro-status">
+        <option value="">Todos status</option>
+        <option value="pendente">Pendente</option>
+        <option value="pago">Pago</option>
+      </select>
+    </div>
+
+    <div class="cards-resumo">
+      <div class="card card-entrada">
+        <span class="card-rotulo">Entradas</span>
+        <span class="card-valor" id="dash-entradas">R$ 0,00</span>
+      </div>
+      <div class="card card-saida">
+        <span class="card-rotulo">Saídas</span>
+        <span class="card-valor" id="dash-saidas">R$ 0,00</span>
+      </div>
+      <div class="card card-saldo">
+        <span class="card-rotulo">Saldo</span>
+        <span class="card-valor" id="dash-saldo">R$ 0,00</span>
+      </div>
+    </div>
+
+    <div class="grafico-container">
+      <h2>Gastos por categoria</h2>
+      <canvas id="grafico-pizza"></canvas>
+    </div>
+
+    <div class="grafico-container">
+      <h2>Entradas x Saídas (12 meses)</h2>
+      <canvas id="grafico-barras"></canvas>
+    </div>
+
+    <div class="grafico-container">
+      <h2>Saldo acumulado (12 meses)</h2>
+      <canvas id="grafico-linha"></canvas>
+    </div>
+  </section>
+
+  <!-- ===================== TELA: NOVA (formulário completo) ===================== -->
+  <section id="tela-nova" class="tela">
+    <header class="cabecalho-tela">
+      <h1>Novo lançamento</h1>
+    </header>
+    <div id="form-nova-container"></div>
+  </section>
+
+  <!-- ===================== TELA: RESERVA ===================== -->
+  <section id="tela-reserva" class="tela">
+    <header class="cabecalho-tela">
+      <h1>Reserva &amp; Metas</h1>
+    </header>
+
+    <div class="bloco">
+      <h2>Meta de reserva de emergência</h2>
+      <div class="linha-campo">
+        <label for="input-meta-valor">Valor alvo</label>
+        <input type="text" id="input-meta-valor" inputmode="decimal" placeholder="R$ 0,00">
+        <button id="btn-salvar-meta" class="botao-secundario">Salvar</button>
+      </div>
+      <div class="barra-progresso">
+        <div id="barra-progresso-preenchida" class="barra-progresso-preenchida"></div>
+      </div>
+      <p id="texto-progresso-reserva">R$ 0,00 de R$ 0,00 (0%)</p>
+      <div class="linha-campo">
+        <label for="input-guardar-valor">Adicionar valor guardado</label>
+        <input type="text" id="input-guardar-valor" inputmode="decimal" placeholder="R$ 0,00">
+        <button id="btn-adicionar-guardado" class="botao-secundario">Adicionar</button>
+      </div>
+      <p id="texto-sugestao-guardar" class="texto-sugestao"></p>
+    </div>
+
+    <div class="bloco">
+      <h2>Modo "matar contas" (bola de neve)</h2>
+      <p class="texto-explicativo">Suas parceladas ativas, da menor para a maior dívida restante.</p>
+      <ul id="lista-matar-contas" class="lista-matar-contas"></ul>
+      <p id="lista-matar-contas-vazia" class="texto-vazio oculto">Nenhuma conta parcelada ativa. 🎉</p>
+    </div>
+  </section>
+
+  <!-- ===================== TELA: CONFIG ===================== -->
+  <section id="tela-config" class="tela">
+    <header class="cabecalho-tela">
+      <h1>Configurações</h1>
+    </header>
+
+    <div class="bloco">
+      <h2>Categorias</h2>
+      <div class="linha-campo">
+        <select id="select-tipo-categoria">
+          <option value="entrada">Entrada</option>
+          <option value="saida">Saída</option>
+        </select>
+        <input type="text" id="input-nova-categoria" placeholder="Nome da categoria">
+        <button id="btn-adicionar-categoria" class="botao-secundario">Adicionar</button>
+      </div>
+      <ul id="lista-categorias" class="lista-simples"></ul>
+    </div>
+
+    <div class="bloco">
+      <h2>Exportar planilha</h2>
+      <div class="linha-campo">
+        <label><input type="radio" name="export-periodo" value="tudo" checked> Tudo</label>
+        <label><input type="radio" name="export-periodo" value="periodo"> Período</label>
+      </div>
+      <div class="linha-campo" id="campos-periodo-export" style="display:none">
+        <input type="date" id="export-data-inicio">
+        <input type="date" id="export-data-fim">
+      </div>
+      <div class="linha-botoes">
+        <button id="btn-exportar-xlsx" class="botao-primario">Exportar XLSX</button>
+        <button id="btn-exportar-csv" class="botao-secundario">Exportar CSV</button>
+      </div>
+    </div>
+
+    <div class="bloco">
+      <h2>Backup</h2>
+      <p id="texto-ultimo-backup" class="texto-explicativo">Nenhum backup realizado ainda.</p>
+      <div class="linha-botoes">
+        <button id="btn-backup-exportar" class="botao-primario">Exportar backup (JSON)</button>
+        <button id="btn-backup-importar" class="botao-secundario">Importar backup (JSON)</button>
+      </div>
+      <input type="file" id="input-importar-backup" accept="application/json" class="oculto">
+    </div>
+
+    <div class="bloco">
+      <h2>Contas fixas e receitas recorrentes</h2>
+      <ul id="lista-modelos" class="lista-simples"></ul>
+      <p id="lista-modelos-vazia" class="texto-vazio oculto">Nenhum modelo cadastrado.</p>
+    </div>
+
+    <p class="versao-app">Minhas Contas — v1.0 — 100% offline</p>
+  </section>
+
+  <!-- Botão flutuante de lançamento rápido -->
+  <button id="fab" class="fab" aria-label="Novo lançamento rápido">+</button>
+
+  <!-- Navegação inferior -->
+  <nav class="nav-inferior">
+    <button class="nav-botao ativo" data-tela="contas"><span class="nav-icone">📋</span>Contas</button>
+    <button class="nav-botao" data-tela="dashboard"><span class="nav-icone">📊</span>Dashboard</button>
+    <button class="nav-botao" data-tela="nova"><span class="nav-icone">➕</span>Nova</button>
+    <button class="nav-botao" data-tela="reserva"><span class="nav-icone">💰</span>Reserva</button>
+    <button class="nav-botao" data-tela="config"><span class="nav-icone">⚙️</span>Config</button>
+  </nav>
+
+  <!-- ===================== MODAL: lançamento rápido (FAB) ===================== -->
+  <div id="modal-rapido" class="modal oculto">
+    <div class="modal-conteudo">
+      <h2>Lançamento rápido</h2>
+      <div class="linha-campo">
+        <select id="rapido-tipo">
+          <option value="saida">Saída</option>
+          <option value="entrada">Entrada</option>
+        </select>
+      </div>
+      <div class="linha-campo">
+        <input type="text" id="rapido-valor" inputmode="decimal" placeholder="Valor (R$)">
+      </div>
+      <div class="linha-campo">
+        <input type="text" id="rapido-descricao" placeholder="Descrição">
+      </div>
+      <div class="linha-campo">
+        <select id="rapido-categoria"></select>
+      </div>
+      <div class="linha-campo">
+        <input type="date" id="rapido-data">
+      </div>
+      <div class="linha-botoes">
+        <button id="rapido-excluir" class="botao-perigo oculto">Excluir</button>
+        <button id="rapido-cancelar" class="botao-secundario">Cancelar</button>
+        <button id="rapido-salvar" class="botao-primario">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: confirmação genérica ===================== -->
+  <div id="modal-confirmar" class="modal oculto">
+    <div class="modal-conteudo">
+      <p id="modal-confirmar-texto">Confirma?</p>
+      <div id="modal-confirmar-opcoes" class="linha-botoes"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bibliotecas via CDN (scripts clássicos, ficam em window.*) -->
+<script src="https://unpkg.com/dexie@4.0.8/dist/dexie.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- App (ES Modules) -->
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
